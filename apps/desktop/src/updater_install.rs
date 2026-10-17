@@ -543,7 +543,10 @@ pub(super) fn unpack(
 		let mut entry = archive
 			.by_index(index)
 			.map_err(|_| "Cannot read an update archive entry.".to_owned())?;
-		let path = safe_path(entry.name())?;
+		let name = entry
+			.name()
+			.map_err(|_| "Cannot read an update archive entry name.".to_owned())?;
+		let path = safe_path(&name)?;
 		if entry.encrypted()
 			|| entry.is_symlink()
 			|| entry

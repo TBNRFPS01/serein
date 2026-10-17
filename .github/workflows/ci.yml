@@ -42,12 +42,25 @@ jobs:
       - name: Linux package regression
         if: runner.os == 'Linux'
         run: PYTHONDONTWRITEBYTECODE=1 python3 packaging/linux/test_package.py
+      - name: Install NSIS
+        if: runner.os == 'Windows'
+        run: choco install nsis --no-progress -y
       - name: Package app without demo or developer features
         run: cargo xtask package
+      - name: Verify Windows installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $installers = @(Get-ChildItem -Path "dist-installer/serein-*-setup.exe" -ErrorAction SilentlyContinue)
+          if ($installers.Count -ne 1) { throw "Expected exactly one Windows installer, found $($installers.Count)." }
       - uses: actions/upload-artifact@v7.0.1
         with:
-          name: serein-${{ runner.os }}-unsigned
-          path: dist/
+          name: serein-${{ runner.os }}-installable
+          path: |
+            dist/
+            dist-installer/*.exe
+          if-no-files-found: error
+          retention-days: 14
   security:
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest

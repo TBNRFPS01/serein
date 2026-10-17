@@ -22,4 +22,7 @@ Open risks: unofficial Discord account policy; third-party login page or platfor
 
 Do not report secrets or raw HTTP/Gateway payloads. Error UI uses fixed categories. Default tests use synthetic markers and local transports. No live network account testing in CI.
 
-Strict cargo-audit currently blocks release on transitive Linux GTK/glib advisory warnings: RUSTSEC-2024-0370 and RUSTSEC-2024-0429. No ignore list is configured. See the dependency audit.
+Strict `cargo audit --deny warnings` runs without an advisory ignore list. Known vulnerable
+transitive versions of `quinn-proto` and `rustls`, and the directly used `zip` archive library,
+are upgraded to fixed releases; update ZIP handling remains bounded and validates paths and entry
+types before staging files.
