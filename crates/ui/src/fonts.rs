@@ -3,6 +3,7 @@ use egui::{Context, FontData, FontDefinitions, FontFamily};
 
 const CJK: &[u8] = include_bytes!("../../../assets/fonts/NotoSansCJKjp-Regular.otf");
 const ARABIC: &[u8] = include_bytes!("../../../assets/fonts/NotoSansArabic.ttf");
+const HEBREW: &[u8] = include_bytes!("../../../assets/fonts/NotoSansHebrew.ttf");
 const INTER: &[u8] = include_bytes!("../../../assets/fonts/Inter-Regular.otf");
 const INTER_MEDIUM: &[u8] = include_bytes!("../../../assets/fonts/Inter-Medium.otf");
 const INTER_SEMIBOLD: &[u8] = include_bytes!("../../../assets/fonts/Inter-SemiBold.otf");
@@ -65,7 +66,11 @@ fn definitions() -> FontDefinitions {
 		list.insert(0, name.into());
 		list.extend(defaults.iter().cloned());
 	}
-	for (name, data) in [("Noto Sans CJK JP", CJK), ("Noto Sans Arabic", ARABIC)] {
+	for (name, data) in [
+		("Noto Sans CJK JP", CJK),
+		("Noto Sans Arabic", ARABIC),
+		("Noto Sans Hebrew", HEBREW),
+	] {
 		definitions
 			.font_data
 			.insert(name.into(), FontData::from_static(data).into());
@@ -96,7 +101,12 @@ mod tests {
 	#[test]
 	fn bundled_fallbacks_cover_multilingual_text_with_a_fixed_asset_budget() {
 		assert!(
-			CJK.len() + ARABIC.len() + INTER.len() + INTER_MEDIUM.len() + INTER_SEMIBOLD.len()
+			CJK.len()
+				+ ARABIC.len()
+				+ HEBREW.len()
+				+ INTER.len()
+				+ INTER_MEDIUM.len()
+				+ INTER_SEMIBOLD.len()
 				<= 18 * 1024 * 1024
 		);
 		let definitions = definitions();
@@ -109,7 +119,9 @@ mod tests {
 						.expect("valid bundled font")
 				})
 				.collect();
-			for c in "Hello, 日本語かなカナ 中文汉字繁體 한국어 العربية مَرْحَبًا é e\u{301}".chars()
+			for c in
+				"Hello, 日本語かなカナ 中文汉字繁體 한국어 العربية מִשְׁפָּחָה שלום מָה־שְּׁלוֹם é e\u{301}"
+					.chars()
 			{
 				assert!(
 					faces.iter().any(|face| {
@@ -130,7 +142,7 @@ mod tests {
 					// egui 0.36.2 has_glyph incorrectly returns false for all
 					// primary-face glyphs. Check every scalar through its font
 					// parser above, then check the actual fallback path here.
-					for c in "日本語かなカナ中文汉字繁體한국어العربية".chars()
+					for c in "日本語かなカナ中文汉字繁體한국어العربيةשלום".chars()
 					{
 						assert!(fonts.has_glyph(&font, c), "missing glyph: {c} ({c:?})");
 					}

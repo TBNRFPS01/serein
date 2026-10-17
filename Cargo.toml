@@ -163,3 +163,6 @@ davey = { path = "vendor/davey" }
 
 # Linux login uses GTK4/WebKit6; exclude obsolete GTK3 declarations from the lockfile.
 wry = { path = "vendor/wry" }
+
+[patch."https://github.com/emilk/egui"]
+epaint = { path = "vendor/egui/crates/epaint" }

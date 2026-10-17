@@ -326,6 +326,7 @@ fn package() -> Result<(), String> {
 	for file in [
 		"NotoSansCJK-LICENSE.txt",
 		"NotoSansArabic-OFL.txt",
+		"NotoSansHebrew-OFL.txt",
 		"Inter-OFL.txt",
 	] {
 		std::fs::copy(

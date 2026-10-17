@@ -1228,12 +1228,27 @@ impl Formatted {
 				}
 				let row = std::sync::Arc::make_mut(&mut placed.row);
 				let mut glyphs = Vec::with_capacity(row.glyphs.len());
-				for glyph in &row.glyphs {
+				let original_char_count = row.char_count_excluding_newline().0;
+				let mut char_count = original_char_count;
+				let mut inserted_chars = 0;
+				let mut glyph_index = 0;
+				while glyph_index < row.glyphs.len() {
+					let glyph = row.glyphs[glyph_index];
+					let logical_index = glyph.logical_index();
+					let group_end = row.glyphs[glyph_index..]
+						.iter()
+						.position(|glyph| glyph.logical_index() != logical_index)
+						.map_or(row.glyphs.len(), |offset| glyph_index + offset);
 					// Placeholders are the only glyphs with the artwork line height; a literal
 					// zero-width space in message text keeps the body font's row height.
 					if next >= inlines.len() || glyph.chr != '\u{200b}' || glyph.line_height != size
 					{
-						glyphs.push(*glyph);
+						for glyph in &row.glyphs[glyph_index..group_end] {
+							let mut glyph = *glyph;
+							glyph.set_logical_index(logical_index + inserted_chars);
+							glyphs.push(glyph);
+						}
+						glyph_index = group_end;
 						continue;
 					}
 					let index = next;
@@ -1247,15 +1262,20 @@ impl Formatted {
 						),
 					));
 					// One hit target: selection endpoints never split a sequence or markup.
-					for chr in inlines[index].text.chars() {
-						let mut slot = *glyph;
+					for (offset, chr) in inlines[index].text.chars().enumerate() {
+						let mut slot = glyph;
 						slot.chr = chr;
+						slot.set_logical_index(logical_index + inserted_chars + offset);
 						slot.pos.x = left;
 						slot.advance_width = size;
 						glyphs.push(slot);
 					}
+					let inline_char_count = inlines[index].text.chars().count();
+					char_count += inline_char_count - 1;
+					inserted_chars += inline_char_count - 1;
+					glyph_index = group_end;
 				}
-				row.glyphs = glyphs;
+				row.set_glyphs(glyphs, char_count);
 			}
 			// Selection and copy read the galley's text: expose exactly the original characters.
 			galley_mut.job = std::sync::Arc::new(LayoutJob::simple(

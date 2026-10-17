@@ -754,6 +754,16 @@
       ]
     },
     {
+      "name": "unicode-bidi",
+      "version": "0.3.18",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "files": [
+        "assets/licenses/dependencies/unicode-bidi-0.3.18-LICENSE-APACHE",
+        "assets/licenses/dependencies/unicode-bidi-0.3.18-LICENSE-MIT"
+      ],
+      "source_archives": []
+    },
+    {
       "name": "webkit6",
       "version": "0.6.1",
       "source": "registry+https://github.com/rust-lang/crates.io-index",

@@ -48,6 +48,11 @@ Apple Color Emoji was visually checked with a synthetic moon status on September
 10, 2026. Windows/Linux emoji coverage is unverified and depends on installed fonts
 (e.g. Segoe UI Emoji / Noto Color Emoji); no OS font is redistributed.
 
+Arabic and Hebrew text use bundled Noto fonts, so glyph coverage does not depend on installed
+Arabic or Hebrew fonts. Unicode bidirectional layout, Arabic shaping and logical caret behavior
+have offline regression coverage; native rendering, keyboard/IME behavior and accessibility have
+not been verified on each target platform.
+
 
 ## Camera capture (September 12, 2026)
 
@@ -143,3 +148,7 @@ automatically updates the Windows uninstall `DisplayVersion` registry key upon
 successful upgrade. Native helpers wait for the old process to exit, retain a rollback
 copy during replacement, and relaunch Serein. A failed recovery leaves its backup
 available with a visible recovery path on the next update attempt.
+
+RTL text direction is determined from each string and its fonts are embedded in the
+executable. Updates replace the complete executable or app bundle, so releases built with RTL
+support carry it without a separate font install or per-user direction setting to migrate.

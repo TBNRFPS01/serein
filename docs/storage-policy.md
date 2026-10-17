@@ -769,3 +769,8 @@ original AppImage path and retains a hard-linked backup until the replacement
 survives its initial two-second launch check. This detects immediate launch failure,
 not application health or a successful login. Interrupted backups block subsequent
 updates for manual recovery. Native Linux packages remain package-manager managed.
+
+Arabic/Hebrew direction is Unicode text-layout behavior, not a saved app preference. The
+Arabic and Hebrew fallback fonts are embedded in each built executable; an update installs a
+whole new executable/bundle (or AppImage), so the matching bidi renderer and fonts arrive
+together. Existing device preferences and account data remain in the user data directory.

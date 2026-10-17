@@ -33,6 +33,8 @@ check. Older `objc2-*-LICENSE.txt` files contain the upstream MIT text.
 | `egui-fonts-UFL.txt` | epaint_default_fonts 0.36.2 | [upstream](https://github.com/emilk/egui/blob/65e7db3c06d779c60ac56647bdd3011ed8ba1cbd/crates/epaint_default_fonts/fonts/UFL.txt) | `2f0015108d68627bd788d313f529c21ff4da2c2c42a5e1f3883acc83480f9002` |
 | `egui-fonts-emoji-icon-font-mit-license.txt` | epaint_default_fonts 0.36.2 | [upstream](https://github.com/emilk/egui/blob/65e7db3c06d779c60ac56647bdd3011ed8ba1cbd/crates/epaint_default_fonts/fonts/emoji-icon-font-mit-license.txt) | `b9d2c1d909aa149996fd4c91dcb92b2362a04431640c1d200959da94caf8cde1` |
 | `egui-fonts-egui-icons.txt` | epaint_default_fonts 0.36.2 | [upstream](https://github.com/emilk/egui/blob/65e7db3c06d779c60ac56647bdd3011ed8ba1cbd/crates/epaint_default_fonts/fonts/egui-icons.txt) | `36dbbfd79d73974f864116879c17dd11559e1340277385f1ac52d8d29a5f5c79` |
+| `unicode-bidi-0.3.18-LICENSE-APACHE` | unicode-bidi 0.3.18 | [registry source](https://static.crates.io/crates/unicode-bidi/unicode-bidi-0.3.18.crate) | `a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2` |
+| `unicode-bidi-0.3.18-LICENSE-MIT` | unicode-bidi 0.3.18 | [registry source](https://static.crates.io/crates/unicode-bidi/unicode-bidi-0.3.18.crate) | `7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0` |
 | `aws-lc-fiat-LICENSE` | aws-lc-sys 0.45.0 | [upstream](https://docs.rs/crate/aws-lc-sys/0.45.0/source/aws-lc/third_party/fiat/LICENSE) | `43e358d7b6eb109d0f51f7b3a090fd82607965767c25fadee39e922475de2061` |
 | `option-ext-0.2.0.crate` | option-ext 0.2.0 | [upstream](https://static.crates.io/crates/option-ext/option-ext-0.2.0.crate) | `04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d` |
 | `hpke-rs-crypto-0.6.1.crate` | hpke-rs-crypto 0.6.1 | [upstream](https://static.crates.io/crates/hpke-rs-crypto/hpke-rs-crypto-0.6.1.crate) | `0a73a99d9008010d73289f41335a3f6e14fb8c04eaf60e9111b450463b1bbc7f` |
@@ -134,6 +136,7 @@ notices. Git-sourced egui uses the full revision recorded in its source links in
 - webview2-com 0.39.1: 3f89fca7a704cee10dcb3654c1dbb8941d1783132f1917358af75bec37a7d7e6
 - webview2-com-macros 0.8.1: 67a921c1b6914c367b2b823cd4cde6f96beec77d30a939c8199bb377cf9b9b54
 - webview2-com-sys 0.39.1: b3a07132775117d6065853d9d1178157b8c90e228de47129d6bce2c7edebedfb
+- unicode-bidi 0.3.18: 5c1cb5db39152898a79168971543b1cb5020dff7fe43c8dc468b0885f5e29df5
 
 ## Unresolved upstream omissions
 

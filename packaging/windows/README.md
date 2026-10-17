@@ -14,3 +14,8 @@ Serein supports both portable zip extraction and a per-user Windows installer:
 - **NSIS Installer**: `packaging/windows/installer.nsi` builds `dist-installer/serein-<version>-setup.exe` via `makensis`. It installs per-user to `%LOCALAPPDATA%\Programs\Serein` (`RequestExecutionLevel user`) without requiring administrator elevation. This preserves full user write permissions for the in-app autoupdater.
 - **PowerShell Setup**: `packaging/windows/setup.ps1` provides a zero-dependency installer/uninstaller script (`powershell -File .\setup.ps1` to install, `powershell -File .\setup.ps1 -Uninstall` to remove).
 - **Autoupdate Compatibility**: Both installers register Serein in `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\Serein`. When Serein autoupdates, the update helper automatically synchronizes `DisplayVersion` in the registry upon file replacement, keeping Windows Settings and Installed Apps accurate. The release zip packages remain strictly decoupled from the installer executable, preventing allowlist check failures during in-app update extraction.
+
+The Windows job in `.github/workflows/ci.yml` builds the package and installer on a Windows
+runner and uploads them as the `serein-Windows-installable` workflow artifact (14-day retention).
+Download it from the successful Windows CI run's **Artifacts** section. The setup executable is
+unsigned; this CI artifact is for installation/testing and is not a published GitHub Release.

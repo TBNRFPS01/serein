@@ -25,8 +25,16 @@ class NativePackageTest(unittest.TestCase):
             for source in Path("docs").glob("*.md"):
                 (staged / "docs" / source.name).write_text("synthetic documentation\n")
             (staged / "licenses").mkdir()
-            for name in ["NotoSansCJK-LICENSE.txt", "NotoSansArabic-OFL.txt", "Inter-OFL.txt",
-                         "Twemoji-CC-BY-4.0.txt", "Unicode-LICENSE.txt", "Phosphor-Icons-MIT.txt", "Simple-Icons-CC0.txt"]:
+            for name in [
+                "NotoSansCJK-LICENSE.txt",
+                "NotoSansArabic-OFL.txt",
+                "NotoSansHebrew-OFL.txt",
+                "Inter-OFL.txt",
+                "Twemoji-CC-BY-4.0.txt",
+                "Unicode-LICENSE.txt",
+                "Phosphor-Icons-MIT.txt",
+                "Simple-Icons-CC0.txt",
+            ]:
                 (staged / "licenses" / name).write_text("synthetic license\n")
             for name in ["licenses/files", "licenses/notifications", "licenses/login",
                          "licenses/voice", "licenses/audio", "licenses/dependencies", "source/hpke-rs"]:
@@ -62,6 +70,7 @@ class NativePackageTest(unittest.TestCase):
                     for excluded in ["debug.log", "stale.log", "stale.deb", "previous.deb", "stale-nested.log"]:
                         self.assertNotIn(excluded, listing)
                     self.assertIn("licenses/voice/", listing)
+                    self.assertIn("licenses/NotoSansHebrew-OFL.txt", listing)
                     with self.assertRaisesRegex(ValueError, "already exists"):
                         packaging.native_package(staged, "0.1.0-test", FORMAT)
                 with self.assertRaisesRegex(ValueError, "semantic application version"):
@@ -82,6 +91,7 @@ class NativePackageTest(unittest.TestCase):
             self.assertNotIn("source/hpke-rs/", listing)
             self.assertIn("licenses/dependencies/PROVENANCE.md", listing)
             self.assertIn("licenses/voice/", listing)
+            self.assertIn("NotoSansHebrew-OFL.txt", listing)
             # Preserve valid metadata while making the expected payload disagree.
             wrong_stage = root / "wrong-stage"
             wrong_stage.mkdir()

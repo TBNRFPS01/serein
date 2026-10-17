@@ -13,6 +13,7 @@ struct Inline {
 	source: Range<usize>,
 	projected: usize,
 	width: f32,
+	right_to_left: bool,
 	label: Option<Arc<egui::Galley>>,
 	background: Color32,
 	image: Option<Image<'static>>,
@@ -77,6 +78,7 @@ impl Layout {
 		let colors = crate::design::palette(ui);
 		let format = TextFormat::simple(font.clone(), colors.text);
 		let size = emoji::inline_size(ui);
+		let bidi = unicode_bidi::BidiInfo::new(text, None);
 		let mut job = LayoutJob::default();
 		job.wrap.max_width = width;
 		if text.is_empty() {
@@ -133,10 +135,16 @@ impl Layout {
 			let count = raw.chars().count();
 			if label.is_some() || image.is_some() || artwork {
 				let slot = label.as_ref().map_or(size, |g| g.size().x + 6.0);
-				// One zero-width glyph plus leading space forms an unbroken inline object.
+				let right_to_left = !bidi.levels[byte].number().is_multiple_of(2);
+				let placeholder = if right_to_left {
+					"\u{200f}"
+				} else {
+					"\u{200e}"
+				};
+				// One directional mark plus leading space forms an unbroken inline object.
 				// Expand its character slots below, so native selection/copy/undo use wire text.
 				job.append(
-					"\u{200b}",
+					placeholder,
 					slot,
 					TextFormat {
 						color: Color32::TRANSPARENT,
@@ -148,6 +156,7 @@ impl Layout {
 					source: source..source + count,
 					projected,
 					width: slot,
+					right_to_left,
 					label,
 					background,
 					image,
@@ -172,26 +181,62 @@ impl Layout {
 		let mut next = 0;
 		for placed in &mut galley_mut.rows {
 			let row = Arc::make_mut(&mut placed.row);
+			let original_char_count = row.char_count_excluding_newline().0;
+			let mut char_count = original_char_count;
+			let mut inserted_chars = 0;
 			let mut glyphs = Vec::with_capacity(row.glyphs.len());
-			for glyph in &row.glyphs {
-				if let Some(inline) = self.inlines.get(next).filter(|i| i.projected == projected) {
+			let mut glyph_index = 0;
+			while glyph_index < row.glyphs.len() {
+				let logical_index = row.glyphs[glyph_index].logical_index();
+				let group_end = row.glyphs[glyph_index..]
+					.iter()
+					.position(|glyph| glyph.logical_index() != logical_index)
+					.map_or(row.glyphs.len(), |offset| glyph_index + offset);
+				if let Some(inline) = self
+					.inlines
+					.get(next)
+					.filter(|inline| inline.projected == projected + logical_index)
+				{
 					let count = inline.source.len();
+					let glyph = row.glyphs[glyph_index];
+					let right_to_left = inline.right_to_left;
+					let left = glyph.pos.x - inline.width;
 					for (index, chr) in chars[inline.source.clone()].iter().enumerate() {
-						let mut slot = *glyph;
+						let mut slot = row.glyphs[glyph_index];
 						slot.chr = *chr;
-						slot.pos.x =
-							glyph.pos.x - inline.width + inline.width * index as f32 / count as f32;
+						slot.set_logical_index(logical_index + inserted_chars + index);
+						let visual_index = if right_to_left {
+							count - index - 1
+						} else {
+							index
+						};
+						slot.pos.x = left + inline.width * visual_index as f32 / count as f32;
 						slot.advance_width = inline.width / count as f32;
 						glyphs.push(slot);
 					}
+					char_count += count - 1;
+					inserted_chars += count - 1;
 					next += 1;
 				} else {
-					glyphs.push(*glyph);
+					for glyph in &row.glyphs[glyph_index..group_end] {
+						let mut glyph = *glyph;
+						glyph.set_logical_index(logical_index + inserted_chars);
+						glyphs.push(glyph);
+					}
 				}
-				projected += 1;
+				glyph_index = group_end;
 			}
-			row.glyphs = glyphs;
-			projected += usize::from(placed.ends_with_newline);
+			let min_x = glyphs
+				.iter()
+				.map(|glyph| glyph.pos.x)
+				.fold(f32::INFINITY, f32::min);
+			if min_x < 0.0 {
+				for glyph in &mut glyphs {
+					glyph.pos.x -= min_x;
+				}
+			}
+			row.set_glyphs(glyphs, char_count);
+			projected += original_char_count + usize::from(placed.ends_with_newline);
 		}
 		// TextEdit's galley and TextBuffer must expose exactly the same original characters.
 		galley_mut.job = Arc::new(LayoutJob::simple(text.to_owned(), font, colors.text, width));
@@ -216,8 +261,13 @@ impl Layout {
 				.galley
 				.pos_from_cursor(cursor)
 				.translate(output.galley_pos.to_vec2());
+			let left = if inline.right_to_left {
+				position.min.x - inline.width
+			} else {
+				position.min.x
+			};
 			let rect = egui::Rect::from_min_size(
-				position.min,
+				egui::pos2(left, position.min.y),
 				egui::vec2(inline.width, position.height()),
 			);
 			if !rect.intersects(output.text_clip_rect) {
@@ -562,7 +612,7 @@ mod tests {
 	fn artwork_keeps_wire_characters_and_cursor_geometry_across_wrapped_lines() {
 		let ctx = egui::Context::default();
 		emoji::install(&ctx).unwrap();
-		let text = "Hi <@42> 👩🏽‍💻 <:serein_leaf:9001>\nagain <@!42> ❤️";
+		let text = "שלום <@42> 👩🏽‍💻 <:serein_leaf:9001>\nagain <@!42> ❤️";
 		let mut avatars = Avatars::default();
 		let mut layout = Layout::default();
 		let output = ctx.run_ui(Default::default(), |ui| {
@@ -574,11 +624,22 @@ mod tests {
 				if row.ends_with_newline {
 					reconstructed.push('\n');
 				}
-				assert!(row.glyphs.iter().all(|g| g.pos.x >= -0.1));
-				assert!(row.glyphs.windows(2).all(|g| g[0].pos.x <= g[1].pos.x));
+				let min_x = row
+					.glyphs
+					.iter()
+					.map(|glyph| glyph.pos.x)
+					.fold(f32::INFINITY, f32::min);
+				assert!(
+					min_x >= -0.1,
+					"glyphs start at {min_x}, row width {}",
+					row.size.x
+				);
+				assert!(row.glyphs.iter().all(|glyph| glyph.pos.x.is_finite()));
 			}
 			assert_eq!(reconstructed, text);
 			assert_eq!(layout.inlines.len(), 5);
+			assert!(layout.inlines[0].right_to_left);
+			assert!(!layout.inlines[3].right_to_left);
 			assert_eq!(
 				layout.inlines.iter().filter(|i| i.image.is_some()).count(),
 				3
@@ -589,14 +650,25 @@ mod tests {
 				let mut cursor = CCursor::new(inline.source.start);
 				cursor.prefer_next_row = true;
 				let start = galley.pos_from_cursor(cursor);
-				cursor.index = inline.source.end.into();
-				cursor.prefer_next_row = false;
-				let end = galley.pos_from_cursor(cursor);
-				assert!(
-					(start.top() - end.top()).abs() < 0.1,
-					"inline must not wrap internally"
-				);
-				assert!((end.left() - start.left() - inline.width).abs() < 1.0);
+				let left = if inline.right_to_left {
+					start.left() - inline.width
+				} else {
+					start.left()
+				};
+				let right = left + inline.width;
+				for index in inline.source.start..=inline.source.end {
+					let mut cursor = CCursor::new(index);
+					cursor.prefer_next_row = index == inline.source.start;
+					let position = galley.pos_from_cursor(cursor);
+					assert!(
+						(start.top() - position.top()).abs() < 0.1,
+						"inline must not wrap internally"
+					);
+					assert!(
+						(left - 1.0..=right + 1.0).contains(&position.left()),
+						"cursor {index} escaped inline bounds {left}..{right}"
+					);
+				}
 			}
 		});
 		output.drop_without_applying_deltas();
